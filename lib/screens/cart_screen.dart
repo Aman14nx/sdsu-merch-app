@@ -266,11 +266,18 @@ class _CartSummaryBar extends StatelessWidget {
   double get _subtotal {
     double total = 0;
     for (final item in cart.items) {
-      final product = sampleProducts.firstWhere(
-        (p) => p.id == item.productId,
-        orElse: () => sampleProducts.first,
-      );
-      total += product.basePrice * item.quantity;
+      // Use the stored unitPrice when it was set (includes accessories &
+      // bulk discount). Fall back to basePrice for any legacy cart rows
+      // that pre-date this field.
+      final double unitPrice = item.unitPrice > 0
+          ? item.unitPrice
+          : sampleProducts
+              .firstWhere(
+                (p) => p.id == item.productId,
+                orElse: () => sampleProducts.first,
+              )
+              .basePrice;
+      total += unitPrice * item.quantity;
     }
     return total;
   }

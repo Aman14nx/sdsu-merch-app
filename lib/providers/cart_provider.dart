@@ -10,18 +10,25 @@ class CartItem {
   final String color;
   final int quantity;
 
+  /// Per-unit price locked in at "Add to Cart" time.
+  /// Already includes base price + selected accessories + bulk discount.
+  /// Defaults to 0 for old Supabase rows that predate this column.
+  final double unitPrice;
+
   const CartItem({
     required this.productId,
     required this.size,
     required this.color,
     required this.quantity,
+    this.unitPrice = 0,
   });
 
-  CartItem copyWith({int? quantity}) => CartItem(
+  CartItem copyWith({int? quantity, double? unitPrice}) => CartItem(
         productId: productId,
         size: size,
         color: color,
         quantity: quantity ?? this.quantity,
+        unitPrice: unitPrice ?? this.unitPrice,
       );
 
   Map<String, dynamic> toMap(String userId) => {
@@ -30,6 +37,7 @@ class CartItem {
         'size': size,
         'color': color,
         'quantity': quantity,
+        'unit_price': unitPrice,
       };
 
   factory CartItem.fromMap(Map<String, dynamic> map) => CartItem(
@@ -37,6 +45,7 @@ class CartItem {
         size: map['size'] as String,
         color: map['color'] as String,
         quantity: map['quantity'] as int,
+        unitPrice: (map['unit_price'] as num?)?.toDouble() ?? 0,
       );
 }
 
@@ -80,7 +89,6 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  // ── Add or merge item ─────────────────────────────────────────────────────
   Future<void> addItem(CartItem newItem) async {
     final idx = state.items.indexWhere((i) =>
         i.productId == newItem.productId &&
@@ -91,8 +99,10 @@ class CartNotifier extends StateNotifier<CartState> {
     CartItem toUpsert;
 
     if (idx >= 0) {
-      toUpsert =
-          updated[idx].copyWith(quantity: updated[idx].quantity + newItem.quantity);
+      toUpsert = updated[idx].copyWith(
+        quantity: updated[idx].quantity + newItem.quantity,
+        unitPrice: newItem.unitPrice,
+      );
       updated[idx] = toUpsert;
     } else {
       toUpsert = newItem;
@@ -108,7 +118,6 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  // ── Update quantity of an existing item ────────────────────────────────────
   Future<void> updateQuantity(CartItem item, int newQty) async {
     if (newQty < 1) {
       await removeItem(item);
@@ -135,7 +144,6 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  // ── Remove item ───────────────────────────────────────────────────────────
   Future<void> removeItem(CartItem item) async {
     state = state.copyWith(
       items: state.items
@@ -156,7 +164,6 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  // ── Clear entire cart ─────────────────────────────────────────────────────
   Future<void> clearCart() async {
     state = state.copyWith(items: []);
     if (_userId != null) {
@@ -164,7 +171,6 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  // ── Reload (call after login) ─────────────────────────────────────────────
   Future<void> reload() => _loadCart();
 }
 

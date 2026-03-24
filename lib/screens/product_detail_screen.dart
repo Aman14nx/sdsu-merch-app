@@ -793,19 +793,35 @@ class _BottomActionDock extends ConsumerWidget {
                   child: ElevatedButton(
                     onPressed: isReady
                         ? () async {
-                            // 1. Add to cart provider (syncs to Supabase)
+                            // 1. Add to cart with the full unit price
+                            //    (base × discount + accessories ÷ quantity)
+                            //    config.totalPrice already equals
+                            //    unitPrice*qty + accessoriesTotal, so we
+                            //    store config.unitPrice as the per-unit price.
                             await ref.read(cartProvider.notifier).addItem(
                                   CartItem(
                                     productId: product.id,
                                     size: config.selectedSize!,
                                     color: config.selectedColor!,
                                     quantity: config.quantity,
+                                    unitPrice: config.unitPrice +
+                                        (config.accessoriesTotal /
+                                            config.quantity),
                                   ),
                                 );
 
                             if (!context.mounted) return;
 
-                            // 2. Show snackbar at the TOP so it never blocks the bottom nav
+                            // 2. Pop back to the previous screen immediately,
+                            //    then show the snackbar there so it persists.
+                            Navigator.pop(context);
+
+                            // Small yield to let the route finish popping
+                            // before we grab its ScaffoldMessenger.
+                            await Future.delayed(
+                                const Duration(milliseconds: 100));
+                            if (!context.mounted) return;
+
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Row(
@@ -827,25 +843,12 @@ class _BottomActionDock extends ConsumerWidget {
                                 ),
                                 backgroundColor: AppColors.success,
                                 behavior: SnackBarBehavior.floating,
-                                // margin pushes it to the TOP of screen
-                                margin: EdgeInsets.only(
-                                  bottom: MediaQuery.of(context).size.height -
-                                      120 -
-                                      MediaQuery.of(context).padding.top,
-                                  left: 16,
-                                  right: 16,
-                                ),
+                                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
-                                duration: const Duration(seconds: 2),
+                                duration: const Duration(seconds: 3),
                               ),
                             );
-
-                            // 3. Pop back to home after brief delay
-                            await Future.delayed(
-                                const Duration(milliseconds: 500));
-                            if (!context.mounted) return;
-                            Navigator.pop(context);
                           }
                         : null,
                     style: ElevatedButton.styleFrom(

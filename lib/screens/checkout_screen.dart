@@ -178,13 +178,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       final items = widget.cartItems.map((ci) {
         final p = _getProduct(ci.productId);
+        // Use the stored unitPrice (includes accessories + discount).
+        // Fall back to basePrice for any legacy cart rows.
+        final double unitPrice = ci.unitPrice > 0 ? ci.unitPrice : p.basePrice;
         return {
           'product_id' : ci.productId,
           'title'      : p.title,
           'size'       : ci.size,
           'color'      : ci.color,
           'quantity'   : ci.quantity,
-          'unit_price' : p.basePrice,
+          'unit_price' : unitPrice,
         };
       }).toList();
 
@@ -1279,7 +1282,7 @@ class _ReviewStep extends StatelessWidget {
                       ),
                     ),
                     Text(
-                        '\$${(p.basePrice * item.quantity).toStringAsFixed(2)}',
+                        '\$${((item.unitPrice > 0 ? item.unitPrice : p.basePrice) * item.quantity).toStringAsFixed(2)}',
                         style: GoogleFonts.outfit(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
