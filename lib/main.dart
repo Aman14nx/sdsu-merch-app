@@ -14,8 +14,8 @@ Future<void> main() async {
   // Replace the placeholders below with your project URL and anon key from
   // https://supabase.com/dashboard → Project Settings → API
   await Supabase.initialize(
-    url: 'https://udjcqoepfcbjpcfnqakc.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkamNxb2VwZmNianBjZm5xYWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4ODM4MjMsImV4cCI6MjA4OTQ1OTgyM30.77mXNpaFxiwnlGAggRTAK2H-3TMeQuBhl1cNCBaE9YA',
+    url: 'use supabase url from dashboard here',
+    anonKey: 'Use supabase anon key from dashboard here',
   );
 
   SystemChrome.setSystemUIOverlayStyle(
